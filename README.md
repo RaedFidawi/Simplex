@@ -1,5 +1,11 @@
 # Simplex solver for linear programs
 Function is initially a minimization problem but it can change to max with the mode parameter. 
+
+## Dependencies
+- The python package Manim which is responsible for video generation should be installed.
+Install using: 
+`pip install manim`
+
 ## How to run
 
 - change mode to min or max depending on your use case

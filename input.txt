@@ -1,0 +1,6 @@
+min Z = 3x1 + 5x2 + 4x3
+subject to
+2x1 + 3x2 <= 8
+2x2 + 5x3 <= 10
+3x1 + 2x2 + 4x3 <= 15
+and x1,x2,x3 >= 0 

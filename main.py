@@ -446,25 +446,64 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
             self.wait(1)
             self.play(title.animate.to_edge(UP))
             
-            problem_lines = ["Maximize"]
-            obj_str = " + ".join([f"{c[i]}x{i}" if c[i] >= 0 else f"({c[i]})x{i}" for i in range(len(c))])
-            problem_lines.append(f"z = {obj_str}")
-            problem_lines.append("Subject to:")
+            # Helper function to format numbers for LaTeX
+            def latex_format(number):
+                if isinstance(number, Fraction):
+                    if number.denominator == 1:
+                        return f"{number.numerator}"
+                    else:
+                        return rf"\frac{{{number.numerator}}}{{{number.denominator}}}"
+                elif isinstance(number, float):
+                    if abs(number - round(number)) < 1e-9:
+                        return f"{int(round(number))}"
+                    else:
+                        return f"{number:.2f}"
+                else:
+                    return f"{number}"
             
+            # Build objective function string
+            obj_terms = []
+            for i in range(len(c)):
+                coeff = c[i]
+                term = f"{latex_format(coeff)}x_{{{i+1}}}"
+                obj_terms.append(term)
+            obj_str = " + ".join(obj_terms).replace("+ -", " - ")
+            
+            # Build constraint strings
+            constraint_strs = []
             for i in range(len(a)):
-                constraint = " + ".join([f"{a[i][j]}x{j}" if a[i][j] >= 0 else f"({a[i][j]})x{j}" for j in range(len(a[i]))])
-                problem_lines.append(f"  {constraint} ≤ {b[i]}")
+                terms = []
+                for j in range(len(a[i])):
+                    coeff = a[i][j]
+                    term = f"{latex_format(coeff)}x_{{{j+1}}}"
+                    terms.append(term)
+                lhs = " + ".join(terms).replace("+ -", " - ")
+                rhs = latex_format(b[i])
+                constraint_strs.append(f"{lhs} \\leq {rhs}")
             
-            problem_lines.append("  xi ≥ 0 for all i")
+            # Create LaTeX aligned environment
+            lines = [
+                r"\text{Maximize } & z = " + obj_str + r" \\",
+                r"\text{Subject to:} & " + constraint_strs[0] + r" \\"
+            ]
+            for cs in constraint_strs[1:]:
+                lines.append(r"& " + cs + r" \\")
+            lines.append(r"& x_i \geq 0 \quad \forall i")
             
-            problem_text = VGroup(*[Text(line, font_size=20) for line in problem_lines])
-            problem_text.arrange(DOWN, aligned_edge=LEFT)
-            problem_text.next_to(title, DOWN, buff=0.5)
+            full_tex = r"""
+            \begin{aligned}
+            %s
+            \end{aligned}
+            """ % " \\ ".join(lines)
             
-            self.play(Write(problem_text))
+            problem_tex = MathTex(full_tex, font_size=24)
+            problem_tex.next_to(title, DOWN, buff=0.5)
+            
+            self.play(Write(problem_tex))
             self.wait(2)
-            self.play(FadeOut(problem_text))
+            self.play(FadeOut(problem_tex))
             
+            # Rest of the animation code remains the same...
             initial_table = self.create_simplex_table(solver.history[0], "Initial Simplex Table")
             self.play(FadeIn(initial_table))
             self.wait(2)

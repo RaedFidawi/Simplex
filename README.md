@@ -6,6 +6,17 @@ Function is initially a minimization problem but it can change to max with the m
 Install using: 
 `pip install manim`
 
+- LaTeX Dependencies: 
+texlive-latex 
+texlive-collection-fontsrecommended 
+dvipng 
+dvisvgm
+texlive-standalone
+texlive-preview
+
+Kindly install te requirements from requirements.txt by running:
+pip install -r requirements.txt
+
 ## How to run
 
 - change mode to min or max depending on your use case

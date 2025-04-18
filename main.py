@@ -1,6 +1,10 @@
 from manim import *
-from fractions import Fraction
 import copy
+import sys
+from fractions import Fraction
+
+from parse_file import parse_lp_problem
+
 
 EPS = 1e-4
 
@@ -523,13 +527,15 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
                 new_table = self.create_simplex_table(state, step_title, highlight_pivot=pivot)
                 
                 explanation = None
-                if pivot:
-                    row, col = pivot
-                    explanation = Text(
-                        f"Pivot: row {row+1}, column {col+1} (x{col})",
-                        font_size=18
-                    )
-                    explanation.next_to(new_table, DOWN, buff=0.5)
+
+                # remove pivoting print 
+                # if pivot:
+                #     row, col = pivot
+                #     explanation = Text(
+                #         f"Pivot: row {row+1}, column {col+1} (x{col})",
+                #         font_size=18
+                #     )
+                #     explanation.next_to(new_table, DOWN, buff=0.5)
                 
                 self.play(Transform(current_table, new_table))
                 
@@ -572,20 +578,18 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
 
 if __name__ == "__main__":
 
-    mode ='min'
+    file_path = sys.argv[1]
+    obj = parse_lp_problem(file_path)
 
-    a = [
-        [-8, -16],  # First constraint (≤)
-        [-60, -40],  # Second constraint (≥)
-        [-2, -2]
-    ]
+    mode = obj['objective']['type']
+    coefficients = obj['objective']['coefficients']
 
-    b = [-200, -960, -40]
-
-    c = [60, 50]  # Minimize this objective function
+    constraints = obj['constraints']['lhs']
+    signs = obj['constraints']['operators']
+    rhs = obj['constraints']['rhs']
 
     if mode == 'max':
-        visualize_simplex(a, b, c, output_file="simplex_example1")
+        visualize_simplex(constraints, rhs, coefficients, output_file="simplex_example1")
     else:
-        c = [-1*i for i in c]
-        visualize_simplex(a, b, c, output_file="simplex_example1")
+        coefficients = [-1*i for i in coefficients]
+        visualize_simplex(constraints, rhs, coefficients, output_file="simplex_example1")

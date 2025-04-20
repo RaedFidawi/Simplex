@@ -1,0 +1,5 @@
+max Z = x1 + x2
+subject to
+x1 + x2 <= 5
+x1 + x2 >= 10
+and x1,x2 >= 0

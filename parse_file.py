@@ -16,6 +16,16 @@ def extract_coefficients(expr, num_vars):
     return coeffs
 
 def parse_lp_problem(file_path):
+    """
+    Usage:
+    obj = parse_lp_problem(file_path)
+    mode = obj['objective']['type']
+    coefficients = obj['objective']['coefficients']
+
+    constraints = obj['constraints']['lhs']
+    signs = obj['constraints']['operators']
+    rhs = obj['constraints']['rhs']
+    """
     with open(file_path, 'r') as f:
         lines = [line.strip() for line in f if line.strip()]
     
@@ -45,7 +55,7 @@ def parse_lp_problem(file_path):
         operators.append(op)
         rhs_values.append(rhs)
     
-    return {
+    obj =  {
         'objective': {
             'type': 'min' if is_min else 'max',
             'coefficients': objective_coeffs
@@ -57,20 +67,15 @@ def parse_lp_problem(file_path):
         }
     }
 
+    return fix_cst(obj)
 
-if __name__ == "__main__":
-    file_path = "input.txt"
-    obj = parse_lp_problem(file_path)
+def fix_cst(obj):
+    for i in range(len(obj['constraints']['operators'])):
 
-    mode = obj['objective']['type']
-    coefficients = obj['objective']['coefficients']
+        if obj['constraints']['operators'][i] == '>=':
 
-    constraints = obj['constraints']['lhs']
-    signs = obj['constraints']['operators']
-    rhs = obj['constraints']['rhs']
-
-    print("Mode: ", mode)
-    print("C: ", coefficients)
-    print("A: ", constraints)
-    print("signs: ", signs)
-    print("RHS: ", rhs)
+            obj['constraints']['lhs'][i] = [-coef for coef in obj['constraints']['lhs'][i]]
+            obj['constraints']['rhs'][i] = -obj['constraints']['rhs'][i]
+            obj['constraints']['operators'][i] = '<='
+    
+    return obj

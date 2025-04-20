@@ -1,6 +1,7 @@
 from manim import *
 import copy
 import sys
+import os
 from fractions import Fraction
 
 from parse_file import parse_lp_problem
@@ -250,6 +251,13 @@ class SimplexSolver:
             if self.phase_one_optimization and all(epsilon_less_than_equal_to(k, 0) for k in self.phase_one_row[:-1]):
                 self.phase_one_optimization = False
                 self.phase_one_complete = True
+
+                # Check if incompatible after phase I
+                if not isclose(self.phase_one_row[-1], 0):
+                    self.resolution = RESOLUTION_INCOMPATIBLE
+                    self._save_state()
+                    return False
+                        
                 # Check if we can proceed to phase 2
                 if all(epsilon_greater_than_equal_to(i, 0) for i in self.tableau[-1][:-1]):
                     self.resolution = RESOLUTION_SOLVED
@@ -429,7 +437,7 @@ class SimplexVisualization(Scene):
         else:
             return Text("Status: IN PROGRESS", color=YELLOW, font_size=24)
 
-def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visualization"):
+def visualize_simplex(a, b, c, mode ="max", basis=None, num=None, output_file="simplex_visualization"):
     num = num or RationalNumbers()
     
     class CustomSimplexVisualization(SimplexVisualization):
@@ -509,6 +517,7 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
             
             # Rest of the animation code remains the same...
             initial_table = self.create_simplex_table(solver.history[0], "Initial Simplex Table")
+            initial_table.shift(UP * 1.5)
             self.play(FadeIn(initial_table))
             self.wait(2)
             
@@ -528,15 +537,6 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
                 
                 explanation = None
 
-                # remove pivoting print 
-                # if pivot:
-                #     row, col = pivot
-                #     explanation = Text(
-                #         f"Pivot: row {row+1}, column {col+1} (x{col})",
-                #         font_size=18
-                #     )
-                #     explanation.next_to(new_table, DOWN, buff=0.5)
-                
                 self.play(Transform(current_table, new_table))
                 
                 if explanation:
@@ -556,16 +556,18 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
                 solution = solver.vertex()
                 solution_text = Text(
                     f"Optimal Solution: x = [{', '.join(self.format_number(x) for x in solution)}]",
-                    font_size=20
+                    font_size=18
                 )
-                solution_text.next_to(resolution_text, DOWN, buff=0.5)
+                solution_text.next_to(resolution_text, DOWN, buff=0.3)
                 
                 optimal_value = sum(c[i] * solution[i] for i in range(len(c)))
+                if mode == 'min':
+                    optimal_value *= -1
                 optimal_text = Text(
                     f"Optimal Value: z = {self.format_number(optimal_value)}",
-                    font_size=20
+                    font_size=18
                 )
-                optimal_text.next_to(solution_text, DOWN, buff=0.3)
+                optimal_text.next_to(solution_text, DOWN, buff=0.2)
                 
                 self.play(Write(solution_text))
                 self.play(Write(optimal_text))
@@ -576,10 +578,9 @@ def visualize_simplex(a, b, c, basis=None, num=None, output_file="simplex_visual
     scene = CustomSimplexVisualization()
     scene.render()
 
-if __name__ == "__main__":
 
-    file_path = sys.argv[1]
-    obj = parse_lp_problem(file_path)
+def solve(file):
+    obj = parse_lp_problem(file)
 
     mode = obj['objective']['type']
     coefficients = obj['objective']['coefficients']
@@ -589,7 +590,22 @@ if __name__ == "__main__":
     rhs = obj['constraints']['rhs']
 
     if mode == 'max':
-        visualize_simplex(constraints, rhs, coefficients, output_file="simplex_example1")
+        visualize_simplex(constraints, rhs, coefficients, mode, output_file="simplex_example1")
     else:
         coefficients = [-1*i for i in coefficients]
-        visualize_simplex(constraints, rhs, coefficients, output_file="simplex_example1")
+        visualize_simplex(constraints, rhs, coefficients, mode, output_file="simplex_example1")
+
+if __name__ == "__main__":
+
+    file_path = sys.argv[1]
+
+    if file_path == 'test':
+        files = sorted(os.listdir(file_path))
+
+        for file in files:
+            path = os.path.join(file_path, file)
+            solve(path)
+            input("Press Enter to continue to the next file...")
+
+    else:
+        solve(file_path)

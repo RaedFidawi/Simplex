@@ -517,7 +517,8 @@ def visualize_simplex(a, b, c, mode ="max", basis=None, num=None, output_file="s
             
             # Rest of the animation code remains the same...
             initial_table = self.create_simplex_table(solver.history[0], "Initial Simplex Table")
-            initial_table.shift(UP * 1.5)
+            # removed table animation downwards
+            # initial_table.shift(UP * 1.5)
             self.play(FadeIn(initial_table))
             self.wait(2)
             
